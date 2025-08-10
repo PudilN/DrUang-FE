@@ -1,12 +1,33 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
+interface Milestone {
+  level: number;
+  finalHeight: string;
+  label: string;
+  milestone: string;
+}
+
+const milestones: Milestone[] = [
+  { level: 1, finalHeight: "20%", label: "Level 1", milestone: "Cari 10 Juta" },
+  { level: 2, finalHeight: "30%", label: "Level 2", milestone: "Membayar semua hutang" },
+  { level: 3, finalHeight: "40%", label: "Level 3", milestone: "Dana darurat sebesar 3 bulan biaya hidup" },
+  { level: 4, finalHeight: "50%", label: "Level 4", milestone: "Investasi 20 % dari pendapatan" },
+  { level: 5, finalHeight: "60%", label: "Level 5", milestone: "Buat dana pendidikan anak" },
+  { level: 6, finalHeight: "70%", label: "Level 6", milestone: "Melunasi KPR" },
+  { level: 7, finalHeight: "80%", label: "Level 7", milestone: "Berbagi" }
+];
+
 export default function AssessmentPage() {
+  const router = useRouter();
+  const [showIntro, setShowIntro] = useState(true);
+  const [animate, setAnimate] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [formData, setFormData] = useState({
     // Page 1: Profil Keuangan Dasar
@@ -31,6 +52,21 @@ export default function AssessmentPage() {
     advisorPreference: ""
   });
 
+  useEffect(() => {
+    if (showIntro) {
+      // Trigger animation on mount
+      const animationTimer = setTimeout(() => {
+        setAnimate(true);
+      }, 500);
+
+      return () => clearTimeout(animationTimer);
+    }
+  }, [showIntro]);
+
+  const startAssessment = () => {
+    setShowIntro(false);
+  };
+
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
@@ -52,9 +88,119 @@ export default function AssessmentPage() {
 
   const handleSubmit = () => {
     console.log("Assessment completed:", formData);
-    alert("Assessment completed! (Demo mode)");
+    const simulatedResult = {
+      determinedLevel: 3,
+      recommendationText: `Berdasarkan data keuangan Anda, selamat! Anda telah berhasil mencapai Level 3: Dana Darurat Terbentuk. Untuk melangkah ke level berikutnya, fokuslah pada peningkatan alokasi dana untuk investasi. Kami merekomendasikan untuk mulai mengalokasikan 10% dari pendapatan bulanan Anda.`,
+      budgetingPlan: [
+        { category: "Pendapatan Bersih", amount: 15000000 },
+        { category: "Dana Darurat", amount: 1500000 },
+        { category: "Investasi", amount: 1500000 },
+        { category: "Kebutuhan Pokok", amount: 7500000 },
+        { category: "Gaya Hidup", amount: 3000000 },
+        { category: "Tabungan Tujuan", amount: 1500000 },
+      ],
+    };
+
+    // Menyimpan hasil simulasi di sessionStorage agar bisa diakses oleh ResultPage
+    sessionStorage.setItem('assessmentResult', JSON.stringify(simulatedResult));
+
+    // Navigasi ke halaman hasil
+    router.push('/result');
   };
 
+  // 7 Levels Intro Component
+  if (showIntro) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-4">
+        {/* Header */}
+        <div className="text-center mb-12">
+          <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">
+            7 Levels Keuangan
+          </h1>
+          <p className="text-gray-300 text-lg">
+            Perjalanan menuju kebebasan finansial
+          </p>
+        </div>
+
+        {/* Bars Container */}
+        <div className="flex justify-center items-end space-x-2 md:space-x-4 h-96 w-full max-w-4xl overflow-x-auto">
+          {milestones.map((milestone, index) => (
+            <div key={milestone.level} className="flex flex-col items-center min-w-0 flex-1 max-w-32">
+              {/* Bar */}
+              <div
+                className="w-12 md:w-16 bg-gradient-to-t from-green-700 to-green-400 rounded-t-lg flex items-end justify-center pb-2 px-1 transition-all duration-1000 ease-out relative"
+                style={{
+                  height: animate ? milestone.finalHeight : "0",
+                  transitionDelay: `${index * 0.2}s`
+                }}
+              >
+                {/* Milestone text inside bar */}
+                <div className="text-white text-xs md:text-sm font-medium text-center leading-tight">
+                  {animate && (
+                    <span 
+                      className="opacity-0 animate-fade-in"
+                      style={{
+                        animationDelay: `${(index * 0.2) + 0.8}s`,
+                        animationFillMode: 'forwards'
+                      }}
+                    >
+                      {milestone.milestone}
+                    </span>
+                  )}
+                </div>
+              </div>
+              
+              {/* Level label below bar */}
+              <span className="text-white mt-3 text-sm md:text-base font-semibold">
+                {milestone.label}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {/* Start Button */}
+        <div className="text-center mt-12">
+          <div 
+            className="opacity-0 animate-fade-in"
+            style={{
+              animationDelay: '3s',
+              animationFillMode: 'forwards'
+            }}
+          >
+            <p className="text-gray-300 text-lg mb-6">
+              Siap untuk mengetahui level keuangan Anda saat ini?
+            </p>
+            <Button
+              onClick={startAssessment}
+              size="lg"
+              className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-8 py-4 text-lg font-semibold rounded-xl"
+            >
+              Mulai Assessment
+            </Button>
+          </div>
+        </div>
+
+        <style jsx>{`
+          @keyframes fade-in {
+            from {
+              opacity: 0;
+              transform: translateY(10px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+          
+          .animate-fade-in {
+            animation: fade-in 0.6s ease-out;
+          }
+        `}</style>
+      </div>
+    );
+  }
+
+  // Assessment Form Pages
   const renderPage1 = () => (
     <div className="space-y-6">
       <div className="text-center space-y-2">
